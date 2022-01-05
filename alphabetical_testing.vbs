@@ -1,9 +1,12 @@
 Sub StockAnalysis()
-
+    
+    'Add the instructions for the assignment up here.
+    
     'Program assumptions
-        '- The stock name is sorted alphabetically
-        '- The date is sorted earliest to latest
-        '- The data always has headers in the first row
+       '- The data always has headers in the first row
+
+    'Sort columns in base data table to ensure stock ticker is filtered first, then date.
+    Range("A:G").Sort Key1:=Range("A:A"), Order1:=xlAscending, Key2:=Range("B:B"), Order1:=xlAscending, Header:=xlYes
     
     'Declare variables
     Dim RowsOfData As Long
@@ -14,20 +17,16 @@ Sub StockAnalysis()
     Dim n As Long
     Dim p As Long
     Dim q As Long
-    Dim YearStartPrice As Long
-    Dim YearEndPrice As Long
+    Dim YearStartPrice As Currency
+    Dim YearEndPrice As Currency
     Dim VolumeSubTotal As Double
-'    Dim Stock_Name As String
-'    Dim Stock_Date As Long
-'    Dim Yearly_Open As Long
-'    Dim Yearly_Close As Long
-'    Dim Volume As Double
-'    Dim Yearly_Change As Long
-'    Dim Yearly_Percent_Change As Long
-    
+
+    'Ensure the appropriate data set in the current worksheet is active.
+    Cells(1, 1).Activate
+
     'Determine the number of rows of data in the table
     RowsOfData = Cells(Rows.Count, 1).End(xlUp).Row
-        
+
     'Set variables here instead of hard-coding
     'Column where stock ticker is stored
     j = 1
@@ -43,10 +42,16 @@ Sub StockAnalysis()
     k = 2
     'Column where the summarized stock symbol will be stored
     m = 10
-    
+
+    'Set the Summary Table Headers
+    Cells(k - 1, m).Value = "Ticker"
+    Cells(k - 1, m + 1).Value = "Yearly Change"
+    Cells(k - 1, m + 2).Value = "Percent Change"
+    Cells(k - 1, m + 3).Value = "Total Stock Volume"
+
     'Set the YearStartPrice for the first stock symbol
     YearStartPrice = Cells(p, q).Value
-    
+
     'Check all of the rows to determine when the stock symbol changes
     For i = p To RowsOfData
         'Check to see if the stock symbol on the row below is the same as the current row.  If not, this would be the last row in that subset.
@@ -57,10 +62,18 @@ Sub StockAnalysis()
             YearEndPrice = Cells(i, n).Value
             'Determine the change in stock price for the year and record in the summary table
             Cells(k, m + 1).Value = YearEndPrice - YearStartPrice
+            Cells(k, m + 1).NumberFormat = "0.00"
             'Calculate the percent change for the year and record in the summary table
             Cells(k, m + 2).Value = (YearEndPrice - YearStartPrice) / YearStartPrice
+            Cells(k, m + 2).NumberFormat = "0.00%"
+            If Cells(k, m + 2).Value > 0 Then
+                Cells(k, m + 2).Interior.ColorIndex = 4
+            ElseIf Cells(k, m + 2).Value < 0 Then
+                Cells(k, m + 2).Interior.ColorIndex = 3
+            End If
             'Add the current row volume stock traded and record the subtotal into the summary table
             Cells(k, m + 3) = VolumeSubTotal + Cells(i, r).Value
+            Cells(k, m + 3).NumberFormat = "#,##0"
             'Reset the variables for the next stock symbol
             YearStartPrice = Cells(i + 1, q).Value
             VolumeSubTotal = 0
@@ -69,62 +82,58 @@ Sub StockAnalysis()
         Else
             'The stock symnbotl on the row below is the same as the current row, and continue to add the daily volume of stock traded for that symbol.
             VolumeSubTotal = VolumeSubTotal + Cells(i, r).Value
-        
+
         End If
     Next i
-            
-            
-            
-            
-            
-    
-    
-    
-    
-    
-    
-    
-    
-    'Stock_Name = Cells(2, 1).Value
-                
-    'Set j as the column where data entry will happen for the summary
-    'j = 1
-    
-    'Set Volume to 0 initially
-    'Volume = 0
-    
-    'Set Stock_Date to initial data cell
-    'Stock_Date = Cells(2, 2).Value
-                   
-    'Loop through the stock names to see if the stock row has changed.
-    'Accummulate the volume for that stock name throughout the course of the year.
-    'For i = 2 To Rows
-        'If Cells(i, 1) <> Stock_Name Then
-            'Cells(j + 1, 10).Value = Stock_Name
-            'Cells(j + 1, 13).Value = Volume
-            'Cells(j + 1, 11).Value = Yearly_Close - Yearly_Open
-            'Cells(j + 1, 12).Value = (Yearly_Close - Yearly_Open) / Yearly_Open
-            
-            ' Reset variables
-            'Stock_Name = Cells(i, 1)
-            'j = j + 1
-            'Volume = Cells(i, 7).Value
-            'Yearly_Open = Cells(i, 3).Value
-            'Yearly_Close = Cells(i, 6).Value
-        'Else
-            'Volume = Volume + Cells(i, 7).Value
-            'If Stock_Date < Cells(i, 2).Value Then
-                'Yearly_Open = Cells(i, 3).Value
-            'ElseIf Stock_Date > Cells(i, 2).Value Then
-                'Yearly_Close = Cells(i, 6).Value
-            'End If
-        'End If
-    'Next i
-    
-    'Format(Range("K:K"),"Standard")
-    
-    
-    'For data analysis only
-    'Cells(1, 10).Value = Rows
-    
+
+    'This code is for the bonus section
+    'Return the greatest % increase, greatest % decrease, and greatest total volume traded
+    'Make the summary table the active table
+    'Do a look to check the percent change value compared to the lowest and highest to that point as well as total volume.
+    'If it is higher or lower, store the stock symbol and the value.
+
+    'Declare variables
+    Dim t As Long
+    Dim GreatestVolume As Double
+
+    'Set the summary values to zero
+    Cells(2, 17).Value = 0
+    Cells(3, 17).Value = 0
+    Cells(4, 17).Value = 0
+
+    'Set a cell in the summary table to active so that the analysis is done on the summary table data
+    Cells(1, 10).Activate
+
+    'Loop through all rows of data in the summary table to compare stock change and value to find the highest and lowest change and highest volume.
+    For t = 2 To k
+
+        If Cells(t, 12).Value > Cells(2, 17).Value Then
+            Cells(2, 17).Value = Cells(t, 12).Value
+            Cells(2, 16).Value = Cells(t, 10).Value
+        ElseIf Cells(t, 12).Value < Cells(3, 17).Value Then
+            Cells(3, 17).Value = Cells(t, 12).Value
+            Cells(3, 16).Value = Cells(t, 10).Value
+        End If
+
+        If Cells(t, 13).Value > GreatestVolume Then
+            GreatestVolume = Cells(t, 13).Value
+            Cells(4, 17).Value = GreatestVolume
+            Cells(4, 16).Value = Cells(t, 10).Value
+        End If
+
+    Next t
+
+    'Add column headers and formatting to the bonus summary table
+    Cells(1, 16).Value = "Ticker"
+    Cells(1, 17).Value = "Value"
+    Cells(2, 15).Value = "Greatest % Increase"
+    Cells(3, 15).Value = "Greatest % Decrease"
+    Cells(4, 15).Value = "Greatest Volume"
+    Cells(2, 17).NumberFormat = "0.00%"
+    Cells(3, 17).NumberFormat = "0.00%"
+    Cells(4, 17).NumberFormat = "#,##0"
+
+    'Adjust the width of all summary columns to fit all text and data to make visible for the reader.
+    Columns("J:Q").AutoFit
+
 End Sub
